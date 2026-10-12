@@ -1,6 +1,6 @@
 # GPLX REST API (backend)
 
-Django 5.2 / Django REST Framework API, JWT authentication and PostgreSQL support, with WhiteNoise-served collected static assets. The backend can also run locally on SQLite for development and focused tests. All project files and commands in this README are scoped to this `backend` directory.
+Django 5.2 / Django REST Framework API, JWT authentication and MySQL support, with WhiteNoise-served collected static assets. All project files and commands in this README are scoped to this `backend` directory.
 
 ## Data integrity and limitations
 
@@ -25,7 +25,7 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-The example environment uses SQLite for local development; use PostgreSQL by setting `DATABASE_URL` to the service URL. For Docker/production, set `DJANGO_DEBUG=false`, a unique secret, and the PostgreSQL URL. In another terminal, import from the project root without copying files:
+The example environment connects to a local MySQL server using the `onluyen_gplx` database. Create the database and user in MySQL before running migrations. For Docker/production, set `DJANGO_DEBUG=false`, a unique secret, and a MySQL `DATABASE_URL`. URL-encode special characters in credentials used in a `DATABASE_URL`. The Compose configuration builds that URL from `MYSQL_USER` and `MYSQL_PASSWORD`, so use URL-safe values for those variables. In another terminal, import from the project root without copying files:
 
 ```powershell
 python manage.py import_questions ..\600_cau_hoi.json --images-archive ..\images.zip --dry-run
@@ -54,9 +54,9 @@ Schedule `python manage.py expire_exam_sessions` at least once per minute in pro
 
 Exam configurations and license classes are managed in Django admin after source curation. Each question must be explicitly associated with its eligible license class; the importer deliberately leaves that relation empty.
 
-## PostgreSQL / container
+## MySQL / container
 
-Configure `DATABASE_URL` for PostgreSQL, `DJANGO_DEBUG=false`, a unique `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, and CORS origins using `.env.example`; set `DATABASE_SSL_REQUIRE=true` when PostgreSQL requires TLS. The SQLite URL in the example is only for local development. For HTTPS deployments enable `SECURE_SSL_REDIRECT` and a suitable `SECURE_HSTS_SECONDS`; only trust forwarded-protocol headers from a proxy that strips client-supplied values. Build from this directory:
+Configure `DATABASE_URL` for MySQL, `DJANGO_DEBUG=false`, a unique `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, and CORS origins using `.env.example`. The repository-root Compose configuration creates and connects to the `onluyen_gplx` database. Set `DATABASE_SSL_REQUIRE=true` when the MySQL server requires TLS. For HTTPS deployments enable `SECURE_SSL_REDIRECT` and a suitable `SECURE_HSTS_SECONDS`; only trust forwarded-protocol headers from a proxy that strips client-supplied values. Build from this directory:
 
 ```powershell
 docker build -t gplx-backend .
@@ -69,7 +69,7 @@ Run migrations as a deployment step before starting workers:
 docker run --rm --env-file .env gplx-backend python manage.py migrate
 ```
 
-This backend-only deliverable does not include or modify a repository-root Compose file. The Django image is ready to be used as the API service alongside a PostgreSQL service.
+The Django image is ready to be used as the API service alongside a MySQL service.
 
 ## Tests and migrations
 
@@ -79,4 +79,4 @@ python manage.py migrate
 python manage.py test
 ```
 
-The project migrations are committed. Tests use Django's test runner and SQLite by default; PostgreSQL deployment uses the same migrations.
+The project migrations are committed. Tests use Django's test runner and the configured database; migrations target the MySQL deployment database.

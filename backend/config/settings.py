@@ -61,8 +61,14 @@ TEMPLATES = [{
 }]
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
+DB_NAME=os.getenv("DATABASE_URL", "onluyen_gplx")
+DB_USER=os.getenv("DB_USER", "root")
+DB_PASSWORD=os.getenv("DB_PASSWORD", "25012002")
+DB_HOST=os.getenv("DB_HOST", "127.0.0.1")
+DB_PORT=os.getenv("DB_PORT", "3306")
 
-DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
+DATABASE_URL=f"mysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+# DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
 DATABASES = {"default": dj_database_url.parse(
     DATABASE_URL,
     conn_max_age=600,

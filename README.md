@@ -1,6 +1,6 @@
 # Vững Tay Lái — Ứng dụng ôn luyện GPLX
 
-Web app ôn tập câu hỏi lý thuyết và thi thử: React + TypeScript ở frontend, Django REST Framework ở backend và PostgreSQL làm cơ sở dữ liệu.
+Web app ôn tập câu hỏi lý thuyết và thi thử: React + TypeScript ở frontend, Django REST Framework ở backend và MySQL làm cơ sở dữ liệu.
 
 ## Tình trạng dữ liệu
 
@@ -23,8 +23,8 @@ Yêu cầu Docker Desktop có Docker Compose plugin.
    Copy-Item .env.example .env
    ```
 
-2. Thay `DJANGO_SECRET_KEY` và mật khẩu PostgreSQL trong `.env` bằng giá trị riêng cho máy local. Không commit `.env`.
-3. Khởi động PostgreSQL, backend và frontend:
+2. Thay `DJANGO_SECRET_KEY` và các mật khẩu MySQL trong `.env` bằng giá trị riêng cho máy local. Không commit `.env`.
+3. Khởi động MySQL, backend và frontend:
 
    ```powershell
    docker compose up --build
@@ -52,11 +52,11 @@ Yêu cầu Docker Desktop có Docker Compose plugin.
    docker compose down
    ```
 
-   Dữ liệu PostgreSQL được giữ trong volume `postgres_data`.
+   Dữ liệu MySQL được giữ trong volume `mysql_data`.
 
 ## Chạy khi phát triển frontend
 
-Yêu cầu Node.js 22+ và backend/PostgreSQL đã chạy.
+Yêu cầu Node.js 22+ và backend/MySQL đã chạy.
 
 ```powershell
 Set-Location frontend
