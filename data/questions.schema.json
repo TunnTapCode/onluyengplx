@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Vietnam GPLX question bank source format",
+  "description": "Schema for the supplied 600_cau_hoi.json source export. A schema-valid file is not by itself proof that the source or answer key is official.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "chapter",
+      "chapter_name",
+      "question",
+      "image",
+      "answers",
+      "correct_answer",
+      "is_critical"
+    ],
+    "properties": {
+      "id": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "chapter": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "chapter_name": {
+        "type": "string",
+        "minLength": 1
+      },
+      "question": {
+        "type": "string",
+        "minLength": 1
+      },
+      "image": {
+        "type": ["string", "null"],
+        "pattern": "^[A-Za-z0-9_-]+\\.(jpg|jpeg|png|webp)$"
+      },
+      "answers": {
+        "type": "array",
+        "minItems": 2,
+        "items": {
+          "type": "object",
+          "required": ["key", "text"],
+          "properties": {
+            "key": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "correct_answer": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 4
+      },
+      "is_critical": {
+        "type": ["boolean", "null"]
+      }
+    },
+    "additionalProperties": false
+  }
+}
