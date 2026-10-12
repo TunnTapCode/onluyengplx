@@ -1,0 +1,64 @@
+- generic [ref=f3e3]:
+  - complementary [ref=f3e4]:
+    - generic [ref=f3e5]:
+      - link "vữngtaynái" [ref=f3e6] [cursor=pointer]:
+        - /url: /
+      - button [ref=f3e12] [cursor=pointer]
+    - generic [ref=f3e16]: KHÔNG GIAN HỌC
+    - navigation [ref=f3e17]:
+      - link "Tổng quan" [ref=f3e18] [cursor=pointer]:
+        - /url: /dashboard
+      - link "Ôn tập" [ref=f3e25] [cursor=pointer]:
+        - /url: /study
+      - link "Thi thử" [ref=f3e29] [cursor=pointer]:
+        - /url: /exam
+      - link "Lịch sử thi" [ref=f3e34] [cursor=pointer]:
+        - /url: /history
+      - link "Câu yêu thích" [ref=f3e39] [cursor=pointer]:
+        - /url: /bookmarks
+      - link "Câu cần ôn lại" [ref=f3e43] [cursor=pointer]:
+        - /url: /mistakes
+    - generic [ref=f3e48]:
+      - generic [ref=f3e49]:
+        - text: Mẹo nhỏ
+        - paragraph [ref=f3e52]: Học 15–20 phút mỗi ngày giúp bạn ghi nhớ tốt hơn.
+      - button "Đăng xuất" [ref=f3e53] [cursor=pointer]
+      - link "H Học viên Xem hồ sơ" [ref=f3e58] [cursor=pointer]:
+        - /url: /profile
+        - generic [ref=f3e59]: H
+        - generic [ref=f3e60]:
+          - generic [ref=f3e61]: Học viên
+          - generic [ref=f3e62]: Xem hồ sơ
+  - main [ref=f3e65]:
+    - generic [ref=f3e66]:
+      - button "Mở menu" [ref=f3e67] [cursor=pointer]
+      - generic [ref=f3e69]: Không gian học / Ôn tập
+      - link "H" [ref=f3e71] [cursor=pointer]:
+        - /url: /profile
+    - generic [ref=f3e72]:
+      - generic [ref=f3e73]:
+        - generic [ref=f3e74]:
+          - generic [ref=f3e75]: THƯ VIỆN CÂU HỎI
+          - heading "Ôn tập lý thuyết" [level=1] [ref=f3e76]
+          - paragraph [ref=f3e77]: Chọn chủ đề, tìm câu hỏi và học theo nhịp của bạn.
+        - link "Câu cần ôn" [ref=f3e79] [cursor=pointer]:
+          - /url: /mistakes
+      - generic [ref=f3e83]:
+        - textbox "Tìm theo nội dung câu hỏi..." [ref=f3e88]
+        - combobox "Hạng GPLX" [ref=f3e89]:
+          - option "Tất cả hạng" [selected]
+        - combobox "Chủ đề" [ref=f3e90]:
+          - option "Tất cả chủ đề" [selected]
+        - combobox "Trạng thái câu hỏi" [ref=f3e91]:
+          - option "Mọi trạng thái" [selected]
+          - option "Chưa học"
+          - option "Đã trả lời sai"
+          - option "Yêu thích"
+        - link "Đã lưu" [ref=f3e92] [cursor=pointer]:
+          - /url: /bookmarks
+      - generic [ref=f3e95]: Đang tải câu hỏi
+      - generic [ref=f3e96]:
+        - generic "Đang tải dữ liệu" [ref=f3e97]
+        - generic "Đang tải dữ liệu" [ref=f3e101]
+        - generic "Đang tải dữ liệu" [ref=f3e105]
+        - generic "Đang tải dữ liệu" [ref=f3e109]

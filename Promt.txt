@@ -1,0 +1,661 @@
+# PROMPT: XÂY DỰNG WEB APP LUYỆN THI GIẤY PHÉP LÁI XE VIỆT NAM 2025
+
+Bạn là Senior Full-stack Developer kiêm UI/UX Designer. Hãy thiết kế và phát triển một ứng dụng web luyện thi giấy phép lái xe (GPLX) tại Việt Nam với giao diện hiện đại, dễ sử dụng, tối ưu cho cả desktop và mobile.
+
+Không chỉ tạo giao diện demo. Hãy xây dựng ứng dụng có kiến trúc rõ ràng, database thật, API hoạt động, xử lý nghiệp vụ đầy đủ và có thể chạy được trên môi trường local.
+
+## 1. Công nghệ bắt buộc
+
+### Frontend
+- React 18+.
+- Vite.
+- TypeScript.
+- React Router DOM.
+- Tailwind CSS.
+- shadcn/ui hoặc các component UI tương đương.
+- Lucide React cho icon.
+- Axios để gọi REST API.
+- TanStack Query để quản lý server state và cache API.
+- React Hook Form + Zod để xử lý form và validation.
+- Recharts cho biểu đồ thống kê kết quả học tập.
+
+### Backend
+- Python 3.11+.
+- Django 4.2+ hoặc phiên bản Django ổn định tương thích.
+- Django REST Framework.
+- Simple JWT để xác thực JWT access token và refresh token.
+- PostgreSQL làm database chính.
+- Django Filter để lọc, tìm kiếm và phân trang.
+- Pillow để xử lý ảnh câu hỏi.
+- django-cors-headers để cấu hình CORS.
+- drf-spectacular để tạo Swagger/OpenAPI documentation.
+
+Sử dụng phiên bản thư viện tương thích, khóa dependency trong file requirements.txt và package-lock.json.
+
+## 2. Mục tiêu sản phẩm
+
+Xây dựng web app giúp người dùng:
+- Ôn tập bộ 600 câu hỏi sát hạch lái xe cơ giới đường bộ Việt Nam áp dụng năm 2025.
+- Luyện thi theo từng chương, chủ đề và hạng giấy phép lái xe.
+- Làm đề thi thử mô phỏng kỳ thi thật.
+- Xem đáp án và giải thích sau khi hoàn thành bài thi.
+- Đánh dấu câu hỏi yêu thích hoặc câu chưa nắm vững.
+- Theo dõi tiến độ học tập, điểm số và lịch sử thi.
+- Quản lý bộ câu hỏi, hình ảnh, đáp án và người dùng thông qua trang quản trị.
+
+Ưu tiên hạng B dành cho ô tô. Thiết kế hệ thống đủ linh hoạt để mở rộng sang các hạng khác như A1, A và các hạng GPLX liên quan.
+
+Dữ liệu câu hỏi phải lấy từ bộ tài liệu chính xác, được xác minh theo quy định áp dụng năm 2025. Không tự bịa câu hỏi, đáp án, giải thích hoặc hình minh họa. Nếu chưa có dữ liệu thật, hãy xây dựng cơ chế import dữ liệu và dùng dữ liệu mẫu được đánh dấu rõ ràng.
+
+## 3. Thiết kế UI/UX
+
+Thiết kế giao diện theo phong cách EdTech hiện đại:
+- Tối giản, trực quan, dễ thao tác.
+- Màu chủ đạo xanh dương hoặc xanh lá kết hợp nền trung tính.
+- Card bo góc vừa phải, shadow nhẹ, khoảng cách hợp lý.
+- Typography rõ ràng, phân cấp thông tin tốt.
+- Animation nhẹ nhàng, không lạm dụng.
+- Responsive hoàn chỉnh cho desktop, tablet và mobile.
+- Có trạng thái loading, empty state, error state và thông báo thành công/thất bại.
+- Có dark mode nếu không ảnh hưởng tiến độ phát triển các tính năng cốt lõi.
+
+Không tạo một dashboard chung chung. Giao diện phải ưu tiên trải nghiệm học và thi.
+
+### 3.1. Trang Landing Page
+
+Đường dẫn: `/`
+
+Bao gồm:
+- Header có logo, menu, nút đăng nhập và đăng ký.
+- Hero section với tiêu đề nổi bật, ví dụ: “Luyện thi GPLX tự tin — Vững vàng tay lái”.
+- Nút “Bắt đầu ôn tập” và “Thi thử ngay”.
+- Thống kê số câu hỏi, chủ đề ôn tập và lượt luyện thi nếu có dữ liệu thực.
+- Các card lựa chọn hạng GPLX.
+- Giới thiệu tính năng nổi bật.
+- Hướng dẫn cách sử dụng.
+- FAQ và footer.
+- CTA rõ ràng dẫn đến trang học hoặc thi thử.
+
+Không hiển thị số liệu thống kê giả như số lượng người dùng thật.
+
+### 3.2. Trang Dashboard người dùng
+
+Đường dẫn: `/dashboard`
+
+Hiển thị:
+- Tổng số câu đã học.
+- Số câu trả lời đúng và sai.
+- Tỷ lệ trả lời đúng.
+- Số đề đã hoàn thành.
+- Điểm trung bình.
+- Tiến độ ôn tập theo từng chương.
+- Biểu đồ điểm thi theo thời gian.
+- Danh sách bài thi gần đây.
+- Danh sách câu hỏi cần ôn lại.
+- Nút tiếp tục học từ vị trí gần nhất.
+
+Các chỉ số phải được tính từ dữ liệu thật của người dùng đăng nhập.
+
+### 3.3. Trang danh sách bộ câu hỏi
+
+Đường dẫn: `/study`
+
+Cho phép:
+- Chọn hạng GPLX.
+- Lọc theo chương hoặc chủ đề.
+- Tìm câu hỏi theo từ khóa hoặc số câu.
+- Lọc câu chưa học, trả lời sai và đã đánh dấu yêu thích.
+- Hiển thị tổng số câu và tiến độ từng chương.
+- Phân trang hoặc tải thêm dữ liệu.
+- Mở chế độ ôn tập cho từng chủ đề.
+
+### 3.4. Trang ôn tập câu hỏi
+
+Đường dẫn: `/study/questions/:id`
+
+Giao diện gồm:
+- Số thứ tự câu hỏi.
+- Nội dung câu hỏi.
+- Hình ảnh minh họa nếu có.
+- Các đáp án A, B, C, D hoặc số lượng đáp án phù hợp với dữ liệu thực.
+- Nút chọn đáp án.
+- Nút kiểm tra đáp án.
+- Hiển thị đáp án đúng và giải thích sau khi người dùng trả lời.
+- Nút câu trước, câu tiếp theo.
+- Nút đánh dấu yêu thích.
+- Nút báo lỗi câu hỏi.
+- Thanh tiến độ ôn tập.
+- Điều hướng nhanh tới câu khác.
+
+Cho phép cấu hình chế độ:
+1. Luyện tập có hiện đáp án ngay sau khi trả lời.
+2. Tự chọn thời điểm kiểm tra đáp án.
+3. Ôn tập các câu đã trả lời sai.
+
+Lưu lịch sử trả lời vào backend để người dùng có thể tiếp tục học trên thiết bị khác sau khi đăng nhập.
+
+### 3.5. Trang thi thử
+
+Đường dẫn: `/exam`
+
+Cho phép:
+- Chọn hạng GPLX.
+- Chọn đề thi ngẫu nhiên theo cấu hình hợp lệ.
+- Hiển thị số câu, thời gian làm bài và điều kiện đạt.
+- Bắt đầu thi và khởi tạo phiên thi ở backend.
+- Không hiển thị đáp án đúng trong khi đang thi.
+- Có đồng hồ đếm ngược.
+- Có bảng điều hướng câu hỏi.
+- Phân biệt câu chưa trả lời, đã trả lời và đang xem.
+- Đánh dấu câu cần xem lại.
+- Có nút nộp bài và hộp thoại xác nhận.
+- Tự động nộp bài khi hết thời gian.
+- Khôi phục trạng thái phiên thi khi tải lại trang nếu phiên còn hợp lệ.
+- Ngăn việc nộp bài nhiều lần hoặc ghi nhận kết quả trùng lặp.
+
+Đường dẫn phiên thi: `/exam/session/:sessionId`
+
+Mọi thời gian, đáp án chính thức, điểm số và trạng thái hoàn thành phải được xác minh ở backend. Frontend không được tự quyết định kết quả thi.
+
+### 3.6. Quy tắc thi hạng B
+
+Thiết kế cấu hình đề thi theo quy định áp dụng cho hạng B tại thời điểm xây dựng.
+
+Cấu hình cần hỗ trợ:
+- Số lượng câu hỏi trong đề.
+- Thời gian làm bài.
+- Điểm đạt tối thiểu.
+- Câu hỏi điểm liệt.
+- Quy tắc tính điểm.
+- Quy tắc không đạt nếu trả lời sai câu điểm liệt.
+- Phân bổ câu hỏi theo nhóm chủ đề.
+
+Với cấu hình hạng B của bộ đề năm 2025, sử dụng 30 câu trong thời gian 20 phút, điểm đạt tối thiểu 27/30 và áp dụng quy tắc câu điểm liệt. Hãy kiểm chứng các quy tắc này với tài liệu chính thức trước khi đưa vào production.
+
+Không hardcode quy tắc vào nhiều component. Lưu chúng trong cấu hình đề thi phía backend để có thể cập nhật khi quy định thay đổi.
+
+### 3.7. Trang kết quả thi
+
+Đường dẫn: `/exam/result/:attemptId`
+
+Hiển thị:
+- Đạt hoặc chưa đạt.
+- Tổng điểm.
+- Số câu đúng, sai và bỏ trống.
+- Trạng thái câu điểm liệt.
+- Thời gian hoàn thành.
+- Danh sách toàn bộ câu hỏi và đáp án đã chọn.
+- Đáp án chính xác và giải thích.
+- Phân loại kết quả theo chương.
+- Nút làm lại đề.
+- Nút ôn tập câu sai.
+- Nút quay về dashboard.
+
+Backend phải lưu kết quả để người dùng có thể xem lại trong lịch sử thi.
+
+### 3.8. Trang lịch sử thi
+
+Đường dẫn: `/history`
+
+Bao gồm:
+- Danh sách lần thi theo thời gian.
+- Điểm số và trạng thái đạt/chưa đạt.
+- Hạng GPLX.
+- Thời gian làm bài.
+- Lọc theo khoảng thời gian và hạng GPLX.
+- Xem lại từng bài thi.
+- Phân trang từ backend.
+
+### 3.9. Trang câu hỏi yêu thích và câu sai
+
+Đường dẫn:
+- `/bookmarks`
+- `/mistakes`
+
+Cho phép xem các câu đã đánh dấu, câu từng trả lời sai và câu cần ôn tập lại.
+
+Có chức năng bỏ đánh dấu, luyện riêng danh sách câu hỏi và cập nhật tiến độ học.
+
+### 3.10. Đăng nhập và tài khoản
+
+Các đường dẫn:
+- `/login`
+- `/register`
+- `/forgot-password`
+- `/profile`
+
+Tính năng:
+- Đăng ký tài khoản.
+- Đăng nhập và đăng xuất.
+- Xác thực bằng JWT.
+- Làm mới access token bằng refresh token.
+- Cập nhật thông tin cá nhân.
+- Đổi mật khẩu.
+- Đặt lại mật khẩu bằng email nếu đã cấu hình email service.
+- Trang yêu cầu đăng nhập đối với tính năng cá nhân.
+- Xử lý token hết hạn và lỗi 401 an toàn.
+
+Không lưu mật khẩu dạng văn bản thuần. Không đặt JWT secret hoặc thông tin database trong frontend.
+
+## 4. Kiến trúc Backend Django
+
+Tổ chức project theo hướng module hóa, ví dụ:
+
+backend/
+- config/
+  - settings/
+  - urls.py
+  - asgi.py
+  - wsgi.py
+- apps/
+  - accounts/
+  - question_bank/
+  - study/
+  - exams/
+  - progress/
+  - reports/
+- media/
+- manage.py
+- requirements.txt
+- .env.example
+
+Có thể điều chỉnh cấu trúc khi cần, nhưng phải giữ trách nhiệm từng module rõ ràng.
+
+### 4.1. Database models
+
+Tạo các model tối thiểu:
+
+**LicenseClass**
+- id
+- code
+- name
+- description
+- is_active
+
+**QuestionCategory**
+- id
+- name
+- slug
+- description
+- order
+
+**Question**
+- id
+- question_number
+- category
+- content
+- image
+- explanation
+- is_critical
+- license_classes
+- source
+- is_active
+- created_at
+- updated_at
+
+**AnswerOption**
+- id
+- question
+- label
+- content
+- is_correct
+- order
+
+Một câu hỏi có nhiều đáp án; phải bảo đảm đáp án thuộc đúng câu hỏi và không có nhiều đáp án đúng ngoài quy tắc của bộ dữ liệu nguồn.
+
+**QuestionBookmark**
+- id
+- user
+- question
+- created_at
+
+**QuestionAttempt**
+- id
+- user
+- question
+- selected_options
+- is_correct
+- answered_at
+- attempt_mode
+
+**ExamConfiguration**
+- id
+- license_class
+- name
+- question_count
+- duration_seconds
+- passing_score
+- critical_question_policy
+- question_distribution
+- is_active
+- version
+
+**ExamSession**
+- id hoặc UUID
+- user
+- configuration
+- started_at
+- expires_at
+- submitted_at
+- status
+- question_snapshot
+- answers
+- score
+- correct_count
+- wrong_count
+- unanswered_count
+- critical_failure
+- passed
+
+**ExamAttempt** hoặc model kết quả tương đương nếu cần tách phiên thi khỏi kết quả đã chấm.
+
+**QuestionReport**
+- id
+- user
+- question
+- reason
+- description
+- status
+- created_at
+
+Bổ sung timestamp, foreign key, unique constraint, index và các ràng buộc database cần thiết.
+
+Không lưu trạng thái học tập cá nhân trong một field JSON khổng lồ nếu có thể biểu diễn bằng các bảng quan hệ phù hợp.
+
+## 5. Thiết kế REST API
+
+Tạo API version `/api/v1/`.
+
+### Authentication
+- `POST /api/v1/auth/register/`
+- `POST /api/v1/auth/login/`
+- `POST /api/v1/auth/token/refresh/`
+- `POST /api/v1/auth/logout/`
+- `GET /api/v1/auth/me/`
+- `PATCH /api/v1/auth/me/`
+- `POST /api/v1/auth/password/change/`
+
+### Hạng GPLX và câu hỏi
+- `GET /api/v1/license-classes/`
+- `GET /api/v1/categories/`
+- `GET /api/v1/questions/`
+- `GET /api/v1/questions/:id/`
+- `GET /api/v1/questions/random/`
+- `GET /api/v1/questions/review/`
+- `POST /api/v1/questions/:id/report/`
+
+Hỗ trợ query params:
+- `license_class`
+- `category`
+- `search`
+- `is_critical`
+- `status`
+- `page`
+- `page_size`
+
+Không để endpoint câu hỏi vô tình lộ đáp án đúng trong chế độ thi.
+
+### Ôn tập và tiến độ
+- `POST /api/v1/study/answer/`
+- `GET /api/v1/study/progress/`
+- `GET /api/v1/study/recent/`
+- `GET /api/v1/study/mistakes/`
+- `GET /api/v1/bookmarks/`
+- `POST /api/v1/bookmarks/`
+- `DELETE /api/v1/bookmarks/:question_id/`
+
+### Thi thử
+- `GET /api/v1/exams/configurations/`
+- `POST /api/v1/exams/sessions/`
+- `GET /api/v1/exams/sessions/:session_id/`
+- `PUT /api/v1/exams/sessions/:session_id/answers/`
+- `POST /api/v1/exams/sessions/:session_id/submit/`
+- `GET /api/v1/exams/results/:attempt_id/`
+- `GET /api/v1/exams/history/`
+
+Tất cả endpoint phải có serializer, validation, permission, xử lý lỗi và response nhất quán.
+
+Ví dụ response phân trang:
+
+{
+  "count": 600,
+  "next": "http://localhost:8000/api/v1/questions/?page=2",
+  "previous": null,
+  "results": []
+}
+
+Không trả dữ liệu minh họa thay cho dữ liệu database thật.
+
+## 6. Logic chấm thi và bảo mật
+
+Đây là phần nghiệp vụ quan trọng nhất.
+
+- Backend tự tạo danh sách câu hỏi cho mỗi phiên thi.
+- Lưu snapshot câu hỏi và thứ tự câu hỏi ngay khi bắt đầu thi.
+- Không trả đáp án đúng cho frontend trước khi nộp bài.
+- Chỉ backend được chấm điểm.
+- Chống sửa điểm từ client.
+- Kiểm tra quyền sở hữu phiên thi trước khi đọc, sửa đáp án hoặc nộp bài.
+- Xác minh thời gian hết hạn dựa trên server.
+- Chỉ cho phép nộp bài một lần theo cơ chế idempotency hoặc transaction an toàn.
+- Tự động chấm khi hết thời gian nếu phiên chưa nộp.
+- Đảm bảo câu điểm liệt được xử lý đúng quy tắc.
+- Lưu lịch sử thi bất biến sau khi hoàn tất.
+- Không cho sửa đáp án của phiên thi đã kết thúc.
+- Xử lý trường hợp hai request gửi cùng lúc.
+- Không để người dùng truy cập dữ liệu học tập hoặc lịch sử của người khác.
+- Giới hạn tần suất với API đăng nhập, gửi báo cáo và các endpoint dễ bị lạm dụng.
+
+Việc chấm thi phải tái lập được từ snapshot câu hỏi, đáp án đã chọn và phiên bản cấu hình đề thi.
+
+## 7. Nhập dữ liệu 600 câu hỏi từ JSON
+
+Xây dựng công cụ import dữ liệu thực tế.
+
+Tạo lệnh Django:
+
+`python manage.py import_questions data/questions.json`
+
+Công cụ import phải:
+- Đọc JSON UTF-8.
+- Kiểm tra schema.
+- Kiểm tra câu hỏi trùng số.
+- Kiểm tra đáp án đúng.
+- Kiểm tra câu điểm liệt.
+- Kiểm tra hình minh họa.
+- Báo lỗi kèm số câu và trường dữ liệu.
+- Có chế độ dry-run để kiểm tra trước khi ghi database.
+- Có cơ chế cập nhật câu hỏi đã tồn tại.
+- Không xóa dữ liệu đang có khi import thất bại.
+- Chạy trong transaction phù hợp.
+- In báo cáo tổng số câu thêm mới, cập nhật, bỏ qua và lỗi.
+
+Định nghĩa định dạng JSON chuẩn, ví dụ:
+
+[
+  {
+    "question_number": 1,
+    "category": "quy-tac-giao-thong",
+    "content": "Nội dung câu hỏi chính xác từ nguồn dữ liệu",
+    "image": null,
+    "explanation": null,
+    "is_critical": false,
+    "license_classes": ["B"],
+    "answers": [
+      {
+        "label": "A",
+        "content": "Nội dung phương án A",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "content": "Nội dung phương án B",
+        "is_correct": true
+      }
+    ]
+  }
+]
+
+Đây là schema minh họa. Không sử dụng nội dung mẫu này làm dữ liệu thi chính thức.
+
+Bổ sung file JSON Schema hoặc cơ chế validation tương đương. Tài liệu hóa cách chuyển dữ liệu từ PDF sang JSON, cách lưu ảnh và cách kiểm tra đáp án trước khi import.
+
+Không tuyên bố đã có đủ 600 câu nếu dữ liệu chưa được cung cấp và xác minh.
+
+## 8. Frontend architecture
+
+Tổ chức frontend:
+
+frontend/
+- src/
+  - app/
+  - components/
+    - ui/
+    - layout/
+    - questions/
+    - exam/
+    - dashboard/
+  - pages/
+  - features/
+    - auth/
+    - study/
+    - questions/
+    - exams/
+    - progress/
+  - hooks/
+  - services/
+  - lib/
+  - types/
+  - routes/
+  - assets/
+  - main.tsx
+  - App.tsx
+
+Yêu cầu:
+- TypeScript strict mode.
+- Không sử dụng `any` tràn lan.
+- Tách API service khỏi UI.
+- Dùng custom hooks cho nghiệp vụ dùng lại.
+- Có route guard cho các trang cần đăng nhập.
+- Tách server state và local UI state.
+- Không gọi API trực tiếp trong mọi component.
+- Có Axios interceptor để xử lý token và lỗi.
+- Có error boundary.
+- Có skeleton loading.
+- Có xử lý mất kết nối mạng.
+- Có empty state khi chưa có dữ liệu.
+- Có cấu hình môi trường qua `VITE_API_BASE_URL`.
+- Không để secret hoặc dữ liệu nhạy cảm trong biến môi trường frontend.
+
+## 9. Admin quản lý dữ liệu
+
+Sử dụng Django Admin và bổ sung các chức năng quản lý cần thiết.
+
+Admin có thể:
+- Thêm, sửa, xóa hoặc vô hiệu hóa câu hỏi.
+- Quản lý đáp án.
+- Quản lý chủ đề.
+- Upload hình minh họa.
+- Đánh dấu câu điểm liệt.
+- Quản lý hạng GPLX.
+- Cấu hình đề thi.
+- Xem và xử lý báo cáo sai câu hỏi.
+- Import dữ liệu từ JSON.
+- Xem số lượng câu hỏi theo chủ đề.
+- Kiểm tra các câu chưa có đáp án hoặc thiếu hình cần thiết.
+
+Bảo đảm quyền admin được kiểm soát phía backend.
+
+## 10. Hiệu năng
+
+- Phân trang tất cả danh sách lớn.
+- Sử dụng `select_related` và `prefetch_related` hợp lý.
+- Tránh N+1 queries.
+- Đặt index cho các trường tìm kiếm và lọc thường xuyên.
+- Không tải toàn bộ 600 câu mỗi lần mở trang.
+- Chỉ tải dữ liệu cần thiết.
+- Có thể cache danh sách câu hỏi hoặc danh mục ít thay đổi.
+- Không cache đáp án hoặc kết quả thi theo cách gây lộ dữ liệu người dùng.
+- Không cache API cá nhân dùng chung giữa các tài khoản.
+- Tối ưu ảnh và sử dụng lazy loading.
+- Không đánh đổi tính chính xác của phiên thi để lấy hiệu năng.
+
+## 11. Kiểm thử
+
+Backend:
+- Unit test cho tính điểm.
+- Test câu điểm liệt.
+- Test hết thời gian.
+- Test nộp bài hai lần.
+- Test quyền truy cập.
+- Test import JSON.
+- Test dữ liệu thiếu đáp án.
+- Test phiên thi hết hạn.
+- Test câu hỏi nhiều đáp án nếu bộ dữ liệu có hỗ trợ.
+
+Frontend:
+- Test các luồng đăng nhập và đăng xuất.
+- Test lựa chọn đáp án.
+- Test đồng hồ đếm ngược.
+- Test điều hướng câu hỏi.
+- Test nộp bài.
+- Test hiển thị kết quả.
+- Test loading, empty state và lỗi API.
+
+Sử dụng pytest hoặc Django Test Framework cho backend; Vitest và React Testing Library cho frontend.
+
+## 12. Docker và triển khai local
+
+Tạo:
+- `docker-compose.yml`
+- `backend/Dockerfile`
+- `frontend/Dockerfile`
+- `.env.example`
+- `.gitignore`
+- `README.md`
+
+Docker Compose phải khởi chạy được frontend, backend và PostgreSQL.
+
+Cung cấp hướng dẫn:
+1. Clone repository.
+2. Cấu hình `.env`.
+3. Khởi chạy Docker Compose.
+4. Chạy migrations.
+5. Tạo superuser.
+6. Import JSON.
+7. Khởi chạy frontend và backend.
+8. Mở Swagger.
+9. Chạy test.
+
+Có thể cung cấp chế độ phát triển không dùng Docker nếu thuận tiện.
+
+## 13. Tiêu chuẩn hoàn thành
+
+Không được chỉ tạo hàng loạt file với nội dung placeholder.
+
+Hãy triển khai lần lượt:
+1. Phân tích yêu cầu và đề xuất kiến trúc.
+2. Tạo cấu trúc project.
+3. Xây dựng model và migration.
+4. Xây dựng API và nghiệp vụ backend.
+5. Xây dựng giao diện React.
+6. Kết nối API thật.
+7. Xây dựng công cụ import dữ liệu.
+8. Viết test.
+9. Viết tài liệu chạy dự án.
+10. Kiểm tra toàn bộ luồng từ đăng nhập, ôn tập, thi thử đến lưu và xem kết quả.
+
+Mỗi giai đoạn phải có mã nguồn thực thi được, không chỉ mô tả.
+
+Nếu đang làm việc trực tiếp trong repository, hãy kiểm tra cấu trúc và các file hiện có trước khi sửa. Không xóa hoặc ghi đè mã nguồn hiện có nếu chưa đánh giá ảnh hưởng.
+
+Khi hoàn thành mỗi giai đoạn, báo cáo:
+- Những file đã tạo hoặc sửa.
+- Những tính năng đã hoàn thành.
+- Lệnh chạy.
+- Kết quả kiểm thử.
+- Các vấn đề chưa giải quyết.
+
+Nếu thiếu dữ liệu 600 câu hỏi chính thức, hãy tiếp tục xây dựng ứng dụng và import pipeline; ghi rõ dữ liệu nào còn thiếu. Không tự tạo đáp án giả để tuyên bố ứng dụng đã hoàn chỉnh.
+
+**Mục tiêu cuối cùng:** Một web app luyện thi GPLX Việt Nam có giao diện chuyên nghiệp, React + Vite ở frontend, Django REST Framework ở backend, PostgreSQL làm cơ sở dữ liệu, hỗ trợ hạng B, có thể mở rộng các hạng khác và sẵn sàng triển khai sau khi dữ liệu câu hỏi cùng các quy tắc thi được xác minh.
