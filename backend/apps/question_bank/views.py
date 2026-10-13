@@ -34,10 +34,10 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ("question_number",)
 
     def get_permissions(self):
-        personal_status = self.request.query_params.get("status") in {
-            "unanswered", "incorrect", "bookmarked"
-        }
-        if self.action == "review" or (self.action == "list" and personal_status):
+        if self.action == "review" or (
+            self.action == "list"
+            and self.request.query_params.get("status") in {"unanswered", "incorrect", "bookmarked"}
+        ):
             return [permissions.IsAuthenticated()]
         return super().get_permissions()
 

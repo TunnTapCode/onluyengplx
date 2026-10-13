@@ -9,6 +9,10 @@ const apiOrigin = new URL(api.defaults.baseURL ?? "http://localhost:8000/api/v1"
 
 export function resolveMediaUrl(image: string | null | undefined): string | undefined {
   if (!image) return undefined;
+  const imageUrl = new URL(image, window.location.origin);
+  if (imageUrl.pathname.startsWith("/media/")) {
+    return `${imageUrl.pathname}${imageUrl.search}${imageUrl.hash}`;
+  }
   return image.startsWith("/") ? `${apiOrigin}${image}` : image;
 }
 
@@ -65,8 +69,8 @@ api.interceptors.response.use(
 );
 
 export type Page<T> = { count: number; next: string | null; previous: string | null; results: T[] };
-export type Category = { id: number; name: string; slug?: string; order?: number };
-export type LicenseClass = { id: number; code: string; name: string; description?: string };
+export type Category = { id: number; name: string; slug?: string; order?: number; question_count?: number };
+export type LicenseClass = { id: number; code: string; name: string; description?: string; legal_source?: string };
 export type AnswerOption = {
   id?: number;
   label?: string;
@@ -91,10 +95,18 @@ export type Question = {
 export type ExamConfiguration = {
   id: number;
   name: string;
+  license_class: number;
   license_class_code?: string;
+  eligible_question_count?: number;
+  eligible_critical_question_count?: number;
   question_count: number;
-  duration_seconds: number;
-  passing_score: number;
+  duration_seconds: number | null;
+  passing_score: number | null;
+  critical_question_policy?: "fail_on_wrong";
+  question_distribution?: Record<string, number>;
+  fixed_question_ids?: number[];
+  version?: number;
+  is_active: boolean;
 };
 export type ExamSession = {
   id: string;
@@ -121,15 +133,50 @@ export type ExamResult = {
   duration_seconds?: number;
   questions?: Question[];
 };
-export type User = { id: number; username: string; email: string; first_name?: string; last_name?: string };
+export type User = { id: number; username: string; email: string; first_name?: string; last_name?: string; is_staff: boolean };
 
 export const apiErrorMessage = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
-    const detail = error.response?.data as { detail?: string; non_field_errors?: string[] } | undefined;
-    return detail?.detail ?? detail?.non_field_errors?.[0] ?? error.message;
+    const data: unknown = error.response?.data;
+    if (typeof data === "string") return data;
+    if (data && typeof data === "object" && !Array.isArray(data)) {
+      const errors = data as Record<string, unknown>;
+      if (typeof errors.detail === "string") return errors.detail;
+      const nonFieldErrors = flattenErrorMessages(errors.non_field_errors);
+      if (nonFieldErrors.length) return nonFieldErrors.join(" ");
+
+      const fieldLabels: Record<string, string> = {
+        email: "Email",
+        first_name: "Tên",
+        last_name: "Họ",
+        password: "Mật khẩu",
+        username: "Tên đăng nhập",
+        license_class: "Hạng GPLX",
+        name: "Tên cấu hình",
+        question_count: "Tổng số câu",
+        duration_seconds: "Thời lượng",
+        passing_score: "Số câu đạt",
+        question_distribution: "Phân bố câu hỏi",
+      };
+      const fieldErrors = Object.entries(errors).flatMap(([field, value]) => {
+        const messages = flattenErrorMessages(value);
+        if (!messages.length) return [];
+        const label = fieldLabels[field] ?? field.replaceAll("_", " ");
+        return messages.map((message) => `${label}: ${message}`);
+      });
+      if (fieldErrors.length) return fieldErrors.join(" ");
+    }
+    return error.message;
   }
   return "Đã xảy ra lỗi. Vui lòng thử lại.";
 };
+
+function flattenErrorMessages(value: unknown): string[] {
+  if (typeof value === "string") return [value];
+  if (Array.isArray(value)) return value.flatMap(flattenErrorMessages);
+  if (value && typeof value === "object") return Object.values(value).flatMap(flattenErrorMessages);
+  return [];
+}
 
 export const isConflictError = (error: unknown): boolean =>
   axios.isAxiosError(error) && error.response?.status === 409;

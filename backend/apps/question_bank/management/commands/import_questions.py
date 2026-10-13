@@ -203,6 +203,7 @@ class Command(BaseCommand):
                 )
                 categories[chapter] = category
             for row in records:
+                existing_question = existing.get(row["id"])
                 image_path = None
                 if row["id"] in image_bytes:
                     filename, content = image_bytes[row["id"]]
@@ -218,7 +219,11 @@ class Command(BaseCommand):
                         "category": categories[row["chapter"]],
                         "content": row["question"],
                         "image": image_path or None,
-                        "is_critical": row["is_critical"],
+                        "is_critical": (
+                            row["is_critical"]
+                            if row["is_critical"] is not None or existing_question is None
+                            else existing_question.is_critical
+                        ),
                         "source": path.name,
                     },
                 )
@@ -243,7 +248,9 @@ class Command(BaseCommand):
 
 
 def row_matches(question, row, category_name, source_name, image_data):
-    if question.content != row["question"] or question.is_critical != row["is_critical"]:
+    if question.content != row["question"] or (
+        row["is_critical"] is not None and question.is_critical != row["is_critical"]
+    ):
         return False
     if question.source != source_name:
         return False

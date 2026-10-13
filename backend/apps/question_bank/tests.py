@@ -88,10 +88,14 @@ class ImportValidationTests(TestCase):
 
     def test_import_preserves_manually_curated_fields_absent_from_source(self):
         category = QuestionCategory.objects.create(name="Old chapter", slug="old-chapter")
-        license_class = LicenseClass.objects.create(code="B", name="B")
+        license_class, _ = LicenseClass.objects.get_or_create(
+            code="B",
+            defaults={"name": "Hạng B"},
+        )
         question = Question.objects.create(
             question_number=42, category=category, content="Earlier wording",
             explanation="Verified explanation", source="earlier.json", is_active=False,
+            is_critical=True,
         )
         question.license_classes.add(license_class)
         payload = json.dumps([source_row()])
@@ -102,3 +106,4 @@ class ImportValidationTests(TestCase):
         self.assertEqual(list(question.license_classes.all()), [license_class])
         self.assertEqual(question.content, "What is the source question?")
         self.assertFalse(question.is_active)
+        self.assertTrue(question.is_critical)

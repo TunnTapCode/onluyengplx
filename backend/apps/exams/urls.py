@@ -1,6 +1,10 @@
+from uuid import UUID
+
+from django.core import signing
 from django.urls import path
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import permissions
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 
@@ -8,24 +12,41 @@ from config.pagination import StandardPagination
 from .models import ExamResult
 from .serializers import ExamHistoryItemSerializer, ExamResultSerializer
 from .services import result_payload
+from .views import ExamConfigurationOptionsView
 
 
 @extend_schema(responses=ExamResultSerializer)
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def result_detail(request, attempt_id):
+    try:
+        attempt_uuid = UUID(attempt_id)
+    except ValueError:
+        try:
+            payload = signing.loads(
+                attempt_id,
+                salt="guest-exam-result",
+                max_age=24 * 60 * 60,
+            )
+        except signing.BadSignature as exc:
+            raise NotFound() from exc
+        if not isinstance(payload, dict):
+            raise NotFound()
+        return Response(payload)
+
+    if not request.user.is_authenticated:
+        raise NotFound()
     result = ExamResult.objects.select_related("session", "session__configuration").filter(
-        pk=attempt_id, session__user=request.user
+        pk=attempt_uuid, session__user=request.user
     ).first()
     if result is None:
-        from rest_framework.exceptions import NotFound
         raise NotFound()
     return Response(result_payload(result.session))
 
 
 @extend_schema(responses=ExamHistoryItemSerializer(many=True))
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([permissions.IsAuthenticated])
 def exam_history(request):
     results = ExamResult.objects.filter(session__user=request.user).select_related(
         "session", "session__configuration", "session__configuration__license_class"
@@ -48,6 +69,7 @@ def exam_history(request):
 
 
 urlpatterns = [
-    path("results/<uuid:attempt_id>/", result_detail, name="exam-result"),
+    path("admin-options/", ExamConfigurationOptionsView.as_view(), name="exam-configuration-options"),
+    path("results/<str:attempt_id>/", result_detail, name="exam-result"),
     path("history/", exam_history, name="exam-history"),
 ]

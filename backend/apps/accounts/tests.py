@@ -20,3 +20,7 @@ class AuthenticationTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("access", response.data)
         self.assertNotIn("password", response.data)
+        self.client.force_authenticate(get_user_model().objects.get(username="newlearner"))
+        profile = self.client.get(reverse("me"))
+        self.assertEqual(profile.status_code, 200)
+        self.assertFalse(profile.data["is_staff"])

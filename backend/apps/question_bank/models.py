@@ -7,6 +7,7 @@ class LicenseClass(models.Model):
     name = models.CharField(max_length=120)
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
+    legal_source = models.URLField(blank=True)
 
     def __str__(self):
         return f"{self.code} — {self.name}"

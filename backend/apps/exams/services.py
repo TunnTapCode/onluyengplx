@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from apps.question_bank.models import Question
 from .models import ExamResult, ExamSession
+from .question_sets import InvalidFixedQuestionSet, resolve_fixed_question_set
 
 
 class NotEnoughQuestions(Exception):
@@ -33,30 +34,81 @@ def create_session(user, configuration):
     distribution = configuration.question_distribution or {}
     if not isinstance(distribution, dict):
         raise InvalidDistribution("Question distribution must be a JSON object.")
-    requested = []
-    for category_key, count in distribution.items():
-        if not str(count).isdigit() or int(count) < 1:
-            raise InvalidDistribution("Each category count must be a positive integer.")
-        try:
-            category_filter = {"category_id": int(category_key)}
-        except (TypeError, ValueError):
-            category_filter = {"category__slug": str(category_key)}
-        group = list(
-            pool.filter(**category_filter).select_related("category").prefetch_related("answers")
-            .order_by("?")[:int(count)]
+    if configuration.question_count < 3:
+        raise InvalidDistribution("An exam must contain at least three questions.")
+    if pool.filter(is_critical=True).count() < 3:
+        raise NotEnoughQuestions(
+            "At least three active critical questions must be assigned to this license class."
         )
-        if len(group) != int(count):
-            raise NotEnoughQuestions(f"Not enough eligible questions in category {category_key}.")
-        requested.extend(group)
-    if len(requested) > configuration.question_count:
-        raise InvalidDistribution("Category counts exceed the configured exam question count.")
-    remaining = configuration.question_count - len(requested)
-    questions = requested + list(
-        pool.exclude(pk__in=[question.pk for question in requested])
-        .select_related("category").prefetch_related("answers").order_by("?")[:remaining]
-    )
+    fixed_question_ids = configuration.fixed_question_ids or []
+    if fixed_question_ids:
+        if distribution:
+            raise InvalidDistribution(
+                "A fixed question set cannot be combined with a category distribution."
+            )
+        try:
+            questions = resolve_fixed_question_set(
+                fixed_question_ids,
+                license_class,
+                configuration.question_count,
+            )
+        except InvalidFixedQuestionSet as exc:
+            raise InvalidDistribution(str(exc)) from exc
+    else:
+        questions = None
+    requested = []
+    selected_critical_count = 0
+    if questions is None:
+        for category_key, count in distribution.items():
+            if not str(count).isdigit() or int(count) < 1:
+                raise InvalidDistribution("Each category count must be a positive integer.")
+            try:
+                category_filter = {"category_id": int(category_key)}
+            except (TypeError, ValueError):
+                category_filter = {"category__slug": str(category_key)}
+            category_pool = pool.filter(**category_filter)
+            critical_count = min(
+                int(count),
+                3 - selected_critical_count,
+                category_pool.filter(is_critical=True).count(),
+            )
+            group = list(
+                category_pool.filter(is_critical=True)
+                .select_related("category").prefetch_related("answers")
+                .order_by("?")[:critical_count]
+            )
+            selected_critical_count += len(group)
+            normal_count = int(count) - len(group)
+            group.extend(
+                category_pool.exclude(is_critical=True)
+                .select_related("category").prefetch_related("answers")
+                .order_by("?")[:normal_count]
+            )
+            if len(group) != int(count):
+                raise NotEnoughQuestions(f"Not enough eligible questions in category {category_key}.")
+            requested.extend(group)
+        if len(requested) > configuration.question_count:
+            raise InvalidDistribution("Category counts exceed the configured exam question count.")
+        selected_ids = [question.pk for question in requested]
+        remaining = configuration.question_count - len(requested)
+        extra_critical = list(
+            pool.filter(is_critical=True).exclude(pk__in=selected_ids)
+            .select_related("category").prefetch_related("answers")
+            .order_by("?")[:max(0, 3 - selected_critical_count)]
+        )
+        if selected_critical_count + len(extra_critical) < 3:
+            raise NotEnoughQuestions("The exam distribution cannot include three critical questions.")
+        questions = requested + extra_critical
+        selected_ids.extend(question.pk for question in extra_critical)
+        remaining -= len(extra_critical)
+        questions += list(
+            pool.exclude(pk__in=selected_ids).exclude(is_critical=True)
+            .select_related("category").prefetch_related("answers").order_by("?")[:remaining]
+        )
     if len(questions) != configuration.question_count:
-        raise NotEnoughQuestions("Not enough curated, active questions assigned to this license class.")
+        raise NotEnoughQuestions(
+            "Not enough curated, active non-critical questions assigned to this license class."
+        )
     snapshot = []
     for question in questions:
         options = list(question.answers.all())
@@ -100,7 +152,7 @@ def finalize_session(session_id, user_id, expired=False):
         pk=session_id, user_id=user_id
     )
     if session.status != ExamSession.Status.IN_PROGRESS:
-        return session, session.result
+        return session, getattr(session, "result", None)
     now = timezone.now()
     was_expired = expired or now >= session.expires_at
     correct_count = wrong_count = unanswered_count = 0
@@ -118,8 +170,7 @@ def finalize_session(session_id, user_id, expired=False):
             correct_count += 1
         else:
             wrong_count += 1
-        failed_critical = bool(question.get("is_critical") is True and not correct and
-                               session.config_snapshot.get("critical_question_policy") == "fail_on_wrong")
+        failed_critical = question.get("is_critical") is True and not correct
         critical_failure = critical_failure or failed_critical
         details.append({
             "question_id": question["question_id"],
@@ -148,7 +199,7 @@ def finalize_session(session_id, user_id, expired=False):
         "submitted_at", "status", "score", "correct_count", "wrong_count",
         "unanswered_count", "critical_failure", "passed",
     ))
-    result = ExamResult.objects.create(session=session)
+    result = ExamResult.objects.create(session=session) if session.user_id else None
     return session, result
 
 

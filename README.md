@@ -4,12 +4,13 @@ Web app ôn tập câu hỏi lý thuyết và thi thử: React + TypeScript ở 
 
 ## Tình trạng dữ liệu
 
-Workspace hiện có `600_cau_hoi.json` (600 bản ghi, chia thành 6 chương) và `images.zip` (318 ảnh). Dữ liệu đầu vào có `correct_answer`, nhưng chưa có nguồn đối chiếu chính thức trong workspace để xác minh nội dung, đáp án hoặc tính áp dụng năm 2025. Cả 600 bản ghi đều để `is_critical: null`; dữ liệu không có trường giải thích hay phân hạng GPLX. Vì vậy:
+Workspace hiện có `600_cau_hoi.json` (600 bản ghi, chia thành 6 chương) và `images.zip` (318 ảnh). Dữ liệu đầu vào có `correct_answer`, nhưng chưa có nguồn đối chiếu chính thức trong workspace để xác minh nội dung, đáp án hoặc tính áp dụng năm 2025. File nguồn để `is_critical: null`; trong MySQL hiện có 60 câu đang được đánh dấu `is_critical=true` và 540 câu không phải điểm liệt. Trạng thái cờ trong cơ sở dữ liệu là nguồn dùng cho ôn tập và thi thử; importer giữ nguyên cờ đã được quản trị viên đánh dấu khi file nguồn vẫn để `null`.
 
-- Không đánh dấu hoặc dùng câu điểm liệt để chấm đề cho đến khi được xác minh.
 - Không suy diễn rằng toàn bộ câu hỏi thuộc hạng B hoặc một hạng khác.
 - Ứng dụng không tuyên bố bộ dữ liệu đã được chứng nhận chính thức.
 - Hãy đối chiếu với tài liệu do cơ quan có thẩm quyền công bố trước khi bật cấu hình thi production.
+
+Danh mục GPLX được khởi tạo theo 15 hạng áp dụng từ 01/01/2025, kèm mô tả và liên kết nguồn Chính phủ. Thi thử lấy đúng 3 câu được đánh dấu `is_critical=true`; sai một trong 3 câu sẽ trượt toàn bài. Gán câu hỏi vào từng hạng vẫn là bước quản trị riêng, không tự suy diễn từ bộ 600 câu.
 
 Schema kiểm tra định dạng nguồn nằm tại [`data/questions.schema.json`](./data/questions.schema.json). Câu hỏi phải được nhập qua lệnh quản trị; không có đáp án/demo bịa sẵn trong database.
 
@@ -85,6 +86,8 @@ npm audit
 ## Các nguyên tắc nghiệp vụ
 
 - Backend chọn và chụp snapshot đề thi; không gửi đáp án đúng trong phiên thi.
+- Mỗi đề có đúng 3 câu `is_critical=true`; sai bất kỳ câu nào trong 3 câu khiến không đạt.
+- Ôn tập có bộ 600 câu, lọc theo chương và bộ 60 câu điểm liệt.
 - Điểm và quy tắc câu điểm liệt do backend quyết định; request của client không thể tự đặt kết quả.
 - Mỗi người dùng chỉ truy cập tiến độ, câu đánh dấu và lịch sử của chính mình.
 - Không bật cấu hình đề thi nếu chưa có bộ câu hỏi, đáp án, phân hạng và quy tắc đạt được xác minh.

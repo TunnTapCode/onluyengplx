@@ -20,7 +20,7 @@ services:
     build: ./backend
     restart: unless-stopped
     env_file:
-      - .env
+      - ./backend/.env
     environment:
       DATABASE_URL: mysql://${MYSQL_USER:-gplx}:${MYSQL_PASSWORD:-change-this-local-password}@db:3306/${MYSQL_DATABASE:-onluyen_gplx}
     command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
@@ -40,6 +40,8 @@ services:
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api/v1}
     restart: unless-stopped
+    volumes:
+      - backend_media:/usr/share/nginx/html/media:ro
     ports:
       - "8080:80"
     depends_on:

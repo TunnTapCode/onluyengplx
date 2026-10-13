@@ -1,4 +1,5 @@
 from django.db.models import Count, Max, OuterRef, Q, Subquery
+from django.db import transaction
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status, viewsets
@@ -21,7 +22,11 @@ from .serializers import (
     BookmarkStatusSerializer,
     StudyAnswerResponseSerializer,
     StudyAnswerSerializer,
+    StudyQuestionStatusSerializer,
+    StudyQuestionStatusQuerySerializer,
     StudyProgressSerializer,
+    StudyResetResponseSerializer,
+    StudyResetSerializer,
 )
 
 
@@ -58,8 +63,13 @@ class BookmarkViewSet(viewsets.ViewSet):
 
 
 class StudyViewSet(viewsets.ViewSet):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     serializer_class = QuestionSerializer
+
+    def get_permissions(self):
+        if self.action == "answer":
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
     @extend_schema(request=StudyAnswerSerializer, responses=StudyAnswerResponseSerializer)
     @action(detail=False, methods=["post"])
@@ -76,19 +86,71 @@ class StudyViewSet(viewsets.ViewSet):
             return Response({"selected_options": "Contains an answer key not belonging to this question."}, status=400)
         correct_keys = set(question.answers.filter(is_correct=True).values_list("label", flat=True))
         is_correct = selected == correct_keys
-        QuestionAttempt.objects.create(
-            user=request.user,
-            question=question,
-            selected_options=sorted(selected),
-            is_correct=is_correct,
-            attempt_mode=values["attempt_mode"],
-        )
+        if request.user.is_authenticated:
+            QuestionAttempt.objects.create(
+                user=request.user,
+                question=question,
+                selected_options=sorted(selected),
+                is_correct=is_correct,
+                attempt_mode=values["attempt_mode"],
+            )
         return Response({
             "question_id": question.pk,
             "is_correct": is_correct,
             "correct_options": sorted(correct_keys),
             "explanation": question.explanation,
         })
+
+    @extend_schema(request=StudyResetSerializer, responses=StudyResetResponseSerializer)
+    @action(detail=False, methods=["post"])
+    def reset(self, request):
+        serializer = StudyResetSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        values = serializer.validated_data
+        questions = Question.objects.filter(is_active=True)
+        if values["mode"] == "chapter":
+            category = get_object_or_404(QuestionCategory, pk=values["category"])
+            questions = questions.filter(category=category)
+        elif values["mode"] == "critical":
+            questions = questions.filter(is_critical=True)
+        if "license_class" in values:
+            questions = questions.filter(license_classes__id=values["license_class"])
+
+        attempts = QuestionAttempt.objects.filter(
+            user=request.user,
+            question_id__in=questions.values("pk"),
+        )
+        with transaction.atomic():
+            deleted_attempts, _ = attempts.delete()
+        return Response({"deleted_attempts": deleted_attempts})
+
+    @extend_schema(responses=StudyQuestionStatusSerializer(many=True))
+    @action(detail=False, methods=["get"])
+    def statuses(self, request):
+        serializer = StudyQuestionStatusQuerySerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        values = serializer.validated_data
+        questions = Question.objects.filter(is_active=True)
+        if values["mode"] == "chapter":
+            questions = questions.filter(category_id=values["category"])
+        elif values["mode"] == "critical":
+            questions = questions.filter(is_critical=True)
+        if "license_class" in values:
+            questions = questions.filter(license_classes__id=values["license_class"])
+
+        latest_attempt = QuestionAttempt.objects.filter(
+            user=request.user,
+            question_id=OuterRef("pk"),
+        ).order_by("-answered_at", "-pk")
+        question_statuses = questions.annotate(
+            latest_is_correct=Subquery(latest_attempt.values("is_correct")[:1]),
+        ).order_by("question_number").values_list("pk", "latest_is_correct")
+        rows = [
+            {"question_id": question_id, "page": page, "is_correct": is_correct}
+            for page, (question_id, is_correct) in enumerate(question_statuses, start=1)
+            if is_correct is not None
+        ]
+        return Response(StudyQuestionStatusSerializer(rows, many=True).data)
 
     @extend_schema(responses=StudyProgressSerializer)
     @action(detail=False, methods=["get"])

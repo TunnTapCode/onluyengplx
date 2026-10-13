@@ -9,17 +9,17 @@ from apps.question_bank.models import LicenseClass
 class ExamConfiguration(models.Model):
     class CriticalPolicy(models.TextChoices):
         FAIL_ON_WRONG = "fail_on_wrong", "Fail on wrong critical question"
-        IGNORE = "ignore", "Do not apply a critical-question rule"
 
     license_class = models.ForeignKey(LicenseClass, on_delete=models.PROTECT, related_name="exam_configurations")
     name = models.CharField(max_length=120)
     question_count = models.PositiveSmallIntegerField()
-    duration_seconds = models.PositiveIntegerField()
-    passing_score = models.PositiveSmallIntegerField()
+    duration_seconds = models.PositiveIntegerField(null=True, blank=True)
+    passing_score = models.PositiveSmallIntegerField(null=True, blank=True)
     critical_question_policy = models.CharField(
         max_length=24, choices=CriticalPolicy.choices, default=CriticalPolicy.FAIL_ON_WRONG
     )
     question_distribution = models.JSONField(default=dict, blank=True)
+    fixed_question_ids = models.JSONField(default=list, blank=True)
     is_active = models.BooleanField(default=True)
     version = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -45,7 +45,13 @@ class ExamSession(models.Model):
         EXPIRED = "expired", "Expired and auto-submitted"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="exam_sessions")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="exam_sessions",
+    )
     configuration = models.ForeignKey(ExamConfiguration, on_delete=models.PROTECT, related_name="sessions")
     started_at = models.DateTimeField()
     expires_at = models.DateTimeField()

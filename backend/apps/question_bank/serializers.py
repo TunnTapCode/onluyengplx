@@ -8,7 +8,7 @@ from .models import AnswerOption, LicenseClass, Question, QuestionCategory
 class LicenseClassSerializer(serializers.ModelSerializer):
     class Meta:
         model = LicenseClass
-        fields = ("id", "code", "name", "description")
+        fields = ("id", "code", "name", "description", "legal_source")
 
 
 class CategorySerializer(serializers.ModelSerializer):
