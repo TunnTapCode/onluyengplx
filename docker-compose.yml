@@ -1,18 +1,20 @@
 services:
   db:
-    image: postgres:16-alpine
+    image: mysql:8.4
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-gplx}
-      POSTGRES_USER: ${POSTGRES_USER:-gplx}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-this-local-password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-onluyen_gplx}
+      MYSQL_USER: ${MYSQL_USER:-gplx}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-change-this-local-password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-this-local-root-password}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gplx} -d ${POSTGRES_DB:-gplx}"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 --silent"]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 20
+      start_period: 20s
 
   backend:
     build: ./backend
@@ -20,9 +22,7 @@ services:
     env_file:
       - .env
     environment:
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
-      DATABASE_URL: postgresql://${POSTGRES_USER:-gplx}:${POSTGRES_PASSWORD:-change-this-local-password}@db:5432/${POSTGRES_DB:-gplx}
+      DATABASE_URL: mysql://${MYSQL_USER:-gplx}:${MYSQL_PASSWORD:-change-this-local-password}@db:3306/${MYSQL_DATABASE:-onluyen_gplx}
     command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - backend_media:/app/media
@@ -46,5 +46,5 @@ services:
       - backend
 
 volumes:
-  postgres_data:
+  mysql_data:
   backend_media:
