@@ -265,3 +265,11 @@ class ExamHistoryItemSerializer(serializers.Serializer):
     critical_failure = serializers.BooleanField(allow_null=True)
     started_at = serializers.DateTimeField()
     submitted_at = serializers.DateTimeField(allow_null=True)
+
+
+class ExamConfigurationProgressSerializer(serializers.Serializer):
+    configuration_id = serializers.IntegerField()
+    attempt_id = serializers.UUIDField()
+    passed = serializers.BooleanField()
+    score = serializers.IntegerField()
+    started_at = serializers.DateTimeField()

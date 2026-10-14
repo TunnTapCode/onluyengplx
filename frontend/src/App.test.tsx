@@ -73,6 +73,7 @@ describe("GPLX app navigation", () => {
       if (url.includes("/questions/")) return { data: { count: 600, next: null, previous: null, results: [] } } as never;
       if (url.includes("/auth/me/")) return { data: { id: 1, username: "hocvien", email: "hocvien@example.test" } } as never;
       if (url === "/study/statuses/") return { data: savedStudyStatuses } as never;
+      if (url === "/exams/progress/") return { data: [] } as never;
       if (url.includes("/exams/sessions/")) return { data: {
         id: "session-1",
         status: "in_progress",
@@ -144,6 +145,80 @@ describe("GPLX app navigation", () => {
     expect(await screen.findByText(/chưa có câu hỏi hoạt động được gán/i)).toBeInTheDocument();
   });
 
+  it("shows per-question exam results in a right-side status list", async () => {
+    localStorage.setItem("gplx_tokens", JSON.stringify({ access: "access-token", refresh: "refresh-token" }));
+    vi.spyOn(api, "get").mockImplementation(async (url) => {
+      if (url === "/auth/me/") return { data: { id: 1, username: "hocvien", email: "hocvien@example.test" } } as never;
+      if (url === "/exams/results/attempt-1/") return { data: {
+        attempt_id: "attempt-1",
+        session_id: "session-1",
+        score: 1,
+        passed: false,
+        correct_count: 1,
+        wrong_count: 1,
+        unanswered_count: 1,
+        critical_failure: false,
+        questions: [
+          { question_id: 11, content: "Question one", is_critical: false, is_correct: true, selected_key: "A", answers: [] },
+          { question_id: 12, content: "Question two", is_critical: false, is_correct: false, selected_key: "B", answers: [] },
+          { question_id: 13, content: "Question three", is_critical: false, is_correct: false, selected_key: null, answers: [] },
+        ],
+      } } as never;
+      return { data: {} } as never;
+    });
+    renderApp("/exam/result/attempt-1");
+
+    expect(await screen.findByRole("heading", { name: "Chưa đạt lần này" })).toBeInTheDocument();
+    expect(screen.queryByText("Ôn lại câu hỏi")).not.toBeInTheDocument();
+    expect(screen.getByRole("complementary", { name: "Kết quả từng câu" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Câu 1: Đúng" })).toHaveClass("result-correct");
+    expect(screen.getByRole("button", { name: "Câu 2: Sai" })).toHaveClass("result-incorrect");
+    expect(screen.getByRole("button", { name: "Câu 3: Bỏ trống" })).toHaveClass("result-unanswered");
+  });
+
+  it("opens a question review popup from the result list", async () => {
+    localStorage.setItem("gplx_tokens", JSON.stringify({ access: "access-token", refresh: "refresh-token" }));
+    vi.spyOn(api, "get").mockImplementation(async (url) => {
+      if (url === "/auth/me/") return { data: { id: 1, username: "hocvien", email: "hocvien@example.test" } } as never;
+      if (url === "/exams/results/attempt-1/") return { data: {
+        attempt_id: "attempt-1",
+        session_id: "session-1",
+        score: 0,
+        passed: false,
+        correct_count: 0,
+        wrong_count: 1,
+        unanswered_count: 0,
+        critical_failure: false,
+        questions: [{
+          question_id: 12,
+          content: "Câu hỏi cần xem lại",
+          image: "/media/questions/q_12.jpg",
+          explanation: "Giải thích câu hỏi.",
+          is_critical: false,
+          is_correct: false,
+          selected_key: "B",
+          correct_keys: ["A"],
+          answers: [
+            { id: 1, label: "A", content: "Đáp án chính xác" },
+            { id: 2, label: "B", content: "Đáp án đã chọn" },
+          ],
+        }],
+      } } as never;
+      return { data: {} } as never;
+    });
+    renderApp("/exam/result/attempt-1");
+
+    await userEvent.click(await screen.findByRole("button", { name: "Câu 1: Sai" }));
+
+    expect(screen.getByRole("dialog", { name: "Câu 1" })).toBeInTheDocument();
+    expect(screen.getByText("Câu hỏi cần xem lại")).toBeInTheDocument();
+    expect(screen.getByText("Đáp án chính xác")).toBeInTheDocument();
+    expect(screen.getByText("Đáp án đã chọn")).toBeInTheDocument();
+    expect(screen.getByText("Giải thích câu hỏi.")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Đóng xem lại câu hỏi" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("shows license-class cards and starts the selected class configuration", async () => {
     localStorage.setItem("gplx_tokens", JSON.stringify({ access: "access-token", refresh: "refresh-token" }));
     vi.spyOn(api, "get").mockImplementation(async (url) => {
@@ -155,11 +230,12 @@ describe("GPLX app navigation", () => {
       if (url === "/exams/configurations/") return { data: [
         { id: 21, license_class: 2, license_class_code: "B", name: "Đề thi hạng B", question_count: 25, duration_seconds: 1200, passing_score: 21 },
       ] } as never;
+      if (url === "/exams/progress/") return { data: [] } as never;
       if (url.includes("/exams/sessions/")) return { data: {
         id: "session-1",
         status: "in_progress",
         expires_at: new Date(Date.now() + 300_000).toISOString(),
-        questions: [{ id: 1, content: "Câu hỏi kiểm tra", is_critical: false, answers: [{ id: 7, label: "A", content: "Đáp án mẫu" }] }],
+        questions: [{ id: 1, content: "Câu hỏi kiểm tra", is_critical: true, answers: [{ id: 7, label: "A", content: "Đáp án mẫu" }] }],
       } } as never;
       return { data: {} } as never;
     });
@@ -180,6 +256,36 @@ describe("GPLX app navigation", () => {
     await userEvent.click(screen.getByRole("button", { name: /Bắt đầu thi/i }));
     expect(api.post).toHaveBeenCalledWith("/exams/sessions/", { configuration_id: 21 });
     expect(await screen.findByRole("heading", { name: "Câu hỏi kiểm tra" })).toBeInTheDocument();
+    expect(screen.getByText("CÂU ĐIỂM LIỆT")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Câu 1, điểm liệt, chưa trả lời" })).toBeInTheDocument();
+  });
+
+  it("shows redo and latest pass status for previously completed exam configurations", async () => {
+    localStorage.setItem("gplx_tokens", JSON.stringify({ access: "access-token", refresh: "refresh-token" }));
+    vi.spyOn(api, "get").mockImplementation(async (url) => {
+      if (url === "/auth/me/") return { data: { id: 1, username: "hocvien", email: "hocvien@example.test" } } as never;
+      if (url === "/license-classes/") return { data: [
+        { id: 2, code: "B", name: "Hạng B", description: "Ô tô" },
+      ] } as never;
+      if (url === "/exams/configurations/") return { data: [
+        { id: 21, license_class: 2, license_class_code: "B", name: "Đề 1", question_count: 30, duration_seconds: 1200, passing_score: 27 },
+        { id: 22, license_class: 2, license_class_code: "B", name: "Đề 2", question_count: 30, duration_seconds: 1200, passing_score: 27 },
+        { id: 23, license_class: 2, license_class_code: "B", name: "Đề 3", question_count: 30, duration_seconds: 1200, passing_score: 27 },
+      ] } as never;
+      if (url === "/exams/progress/") return { data: [
+        { configuration_id: 21, attempt_id: "result-1", passed: true, score: 29, started_at: "2026-10-14T00:00:00Z" },
+        { configuration_id: 22, attempt_id: "result-2", passed: false, score: 26, started_at: "2026-10-14T00:00:00Z" },
+      ] } as never;
+      return { data: {} } as never;
+    });
+    renderApp("/exam");
+
+    await userEvent.click(await screen.findByRole("button", { name: /Chọn hạng B Hạng B/i }));
+
+    expect(await screen.findByText("Đã làm · Đạt · 29 điểm")).toBeInTheDocument();
+    expect(screen.getByText("Đã làm · Chưa đạt · 26 điểm")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /Làm lại/i })).toHaveLength(2);
+    expect(screen.getByRole("button", { name: /Bắt đầu thi/i })).toBeInTheDocument();
   });
 
   it("shows eight study cards and opens the selected practice content", async () => {

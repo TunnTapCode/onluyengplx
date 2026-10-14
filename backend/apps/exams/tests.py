@@ -456,6 +456,56 @@ class ExamFlowTests(TestCase):
         self.assertEqual(response.data["category_progress"][0]["total"], 5)
         self.assertEqual(response.data["exam_scores"][0]["score"], 1)
 
+    def test_configuration_progress_returns_latest_attempt_per_configuration_and_user(self):
+        first_session = create_session(self.user, self.configuration)
+        first_session.answers = {
+            str(question["question_id"]): "1"
+            for question in first_session.question_snapshot
+        }
+        first_session.save(update_fields=["answers"])
+        _, first_result = finalize_session(first_session.pk, self.user.pk)
+        ExamResult.objects.filter(pk=first_result.pk).update(
+            created_at=timezone.now() - timedelta(minutes=1),
+        )
+
+        latest_session = create_session(self.user, self.configuration)
+        critical_question_id = next(
+            question["question_id"]
+            for question in latest_session.question_snapshot
+            if question["is_critical"] is True
+        )
+        latest_session.answers = {
+            str(question["question_id"]): (
+                "2" if question["question_id"] == critical_question_id else "1"
+            )
+            for question in latest_session.question_snapshot
+        }
+        latest_session.save(update_fields=["answers"])
+        _, latest_result = finalize_session(latest_session.pk, self.user.pk)
+
+        other_session = create_session(self.other, self.configuration)
+        other_session.answers = {
+            str(question["question_id"]): "1"
+            for question in other_session.question_snapshot
+        }
+        other_session.save(update_fields=["answers"])
+        finalize_session(other_session.pk, self.other.pk)
+
+        client = APIClient()
+        client.force_authenticate(self.user)
+        response = client.get(reverse("exam-configuration-progress"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["configuration_id"], self.configuration.pk)
+        self.assertEqual(response.data[0]["attempt_id"], str(latest_result.pk))
+        self.assertFalse(response.data[0]["passed"])
+        self.assertEqual(response.data[0]["score"], 4)
+
+    def test_configuration_progress_requires_authentication(self):
+        response = APIClient().get(reverse("exam-configuration-progress"))
+        self.assertEqual(response.status_code, 401)
+
     def test_exam_configuration_api_is_public_read_and_staff_write(self):
         endpoint = reverse("exam-configuration-list")
         payload = {

@@ -10,7 +10,11 @@ from drf_spectacular.utils import extend_schema
 
 from config.pagination import StandardPagination
 from .models import ExamResult
-from .serializers import ExamHistoryItemSerializer, ExamResultSerializer
+from .serializers import (
+    ExamConfigurationProgressSerializer,
+    ExamHistoryItemSerializer,
+    ExamResultSerializer,
+)
 from .services import result_payload
 from .views import ExamConfigurationOptionsView
 
@@ -68,8 +72,42 @@ def exam_history(request):
     } for result in page])
 
 
+@extend_schema(responses=ExamConfigurationProgressSerializer(many=True))
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def exam_configuration_progress(request):
+    attempts = ExamResult.objects.filter(
+        session__user=request.user,
+    ).order_by(
+        "-created_at", "-pk",
+    ).values(
+        "pk",
+        "session__configuration_id",
+        "session__passed",
+        "session__score",
+        "session__started_at",
+    )
+    latest_by_configuration = {}
+    for attempt in attempts.iterator():
+        configuration_id = attempt["session__configuration_id"]
+        if configuration_id in latest_by_configuration:
+            continue
+        latest_by_configuration[configuration_id] = {
+            "configuration_id": configuration_id,
+            "attempt_id": attempt["pk"],
+            "passed": attempt["session__passed"],
+            "score": attempt["session__score"],
+            "started_at": attempt["session__started_at"],
+        }
+    return Response(ExamConfigurationProgressSerializer(
+        latest_by_configuration.values(),
+        many=True,
+    ).data)
+
+
 urlpatterns = [
     path("admin-options/", ExamConfigurationOptionsView.as_view(), name="exam-configuration-options"),
+    path("progress/", exam_configuration_progress, name="exam-configuration-progress"),
     path("results/<str:attempt_id>/", result_detail, name="exam-result"),
     path("history/", exam_history, name="exam-history"),
 ]

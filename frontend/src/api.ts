@@ -91,6 +91,7 @@ export type Question = {
   answers: AnswerOption[];
   selected_key?: string | null;
   correct_keys?: string[];
+  is_correct?: boolean;
 };
 export type ExamConfiguration = {
   id: number;
@@ -107,6 +108,13 @@ export type ExamConfiguration = {
   fixed_question_ids?: number[];
   version?: number;
   is_active: boolean;
+};
+export type ExamConfigurationProgress = {
+  configuration_id: number;
+  attempt_id: string;
+  passed: boolean;
+  score: number;
+  started_at: string;
 };
 export type ExamSession = {
   id: string;
